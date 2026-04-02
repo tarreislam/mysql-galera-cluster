@@ -4,6 +4,10 @@ max_connections = ${MAX_CONNECTIONS}
 back_log = ${BACK_LOG}
 thread_cache_size = ${THREAD_CACHE_SIZE}
 
+innodb_stats_on_metadata = 0
+innodb_lock_wait_timeout = 10
+innodb_old_blocks_time = 1000
+innodb_doublewrite  = 0
 innodb_buffer_pool_size = ${INNODB_BUFFER_POOL_SIZE}
 innodb_buffer_pool_instances = ${INNODB_BUFFER_POOL_INSTANCES}
 
@@ -30,6 +34,8 @@ max_allowed_packet = ${MAX_ALLOWED_PACKET}
 
 bind-address = 0.0.0.0
 skip-name-resolve
+wait_timeout = 300
+interactive_timeout = 300
 
 wsrep_on = ON
 wsrep_provider = /usr/lib/galera/libgalera_smm.so
