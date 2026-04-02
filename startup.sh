@@ -1,49 +1,26 @@
 #!/bin/bash
 set -e
-
 # Load environment from .env
 export $(grep -v '^#' .env | xargs)
+# Generate config
+touch /etc/mysql/conf.d/10.cnf
+envsubst < /etc/mysql/my.cnf.template > /etc/mysql/conf.d/10.cnf
 
-# Set read-only flags dynamically
-if [ "$MYSQL_ROLE" = "replica" ]; then
-  export READ_ONLY=ON
-  export SUPER_READ_ONLY=ON
+#Debug?
+if [ "$MYSQL_ROLE" = "debug" ]; then
+  echo "Debug"
+    while true
+    do
+        :
+    done
+fi
+
+# Run mariadb
+if [ "$MYSQL_ROLE" = "wsrep-new-cluster" ]; then
+  echo "Starting new cluster (force safe to start)"
+  sed -i 's/^\(safe_to_bootstrap:\s*\).*/\11/' /var/lib/mysql/grastate.dat
+  docker-entrypoint.sh mariadbd --wsrep-new-cluster
 else
-  export READ_ONLY=OFF
-  export SUPER_READ_ONLY=OFF
+  echo "Running as joiner"
+  docker-entrypoint.sh mariadbd
 fi
-
-# Generate my.cnf
-envsubst < /etc/mysql/my.cnf.template > /etc/mysql/my.cnf
-
-# Start MySQL in background
-docker-entrypoint.sh mysqld &
-PID=$!
-
-# Wait for MySQL to be ready
-until mysqladmin ping -h "127.0.0.1" --silent; do
-  sleep 1
-done
-
-# Role-based replication setup
-if [ "$MYSQL_ROLE" = "primary" ]; then
-  mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
-    CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED BY '${REPL_PASSWORD}';
-    GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
-    FLUSH PRIVILEGES;
-EOSQL
-fi
-
-if [ "$MYSQL_ROLE" = "replica" ]; then
-  mysql -uroot -p"$MYSQL_ROOT_PASSWORD" <<-EOSQL
-    CHANGE REPLICATION SOURCE TO
-      SOURCE_HOST='${PRIMARY_HOST}',
-      SOURCE_PORT='${PRIMARY_PORT}',
-      SOURCE_USER='repl',
-      SOURCE_PASSWORD='${REPL_PASSWORD}',
-      SOURCE_AUTO_POSITION=1;
-    START REPLICA;
-EOSQL
-fi
-
-wait $PID
