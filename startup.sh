@@ -18,7 +18,9 @@ fi
 # Run mariadb
 if [ "$MYSQL_ROLE" = "wsrep-new-cluster" ]; then
   echo "Starting new cluster (force safe to start)"
-  sed -i 's/^\(safe_to_bootstrap:\s*\).*/\11/' /var/lib/mysql/grastate.dat
+  if [ -f /var/lib/mysql/grastate.dat ]; then
+    sed -i 's/^\(safe_to_bootstrap:\s*\).*/\11/' /var/lib/mysql/grastate.dat
+  fi
   docker-entrypoint.sh mariadbd --wsrep-new-cluster
 else
   echo "Running as joiner"
