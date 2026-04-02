@@ -1,10 +1,8 @@
 [mysqld]
 server-id = ${MYSQL_SERVER_ID}
 log_bin = mysql-bin
-binlog_format = ROW
 gtid_mode = ON
 enforce_gtid_consistency = ON
-log_slave_updates = ON
 relay_log_recovery = ON
 
 max_connections = ${MAX_CONNECTIONS}
@@ -29,7 +27,6 @@ innodb_flush_method = O_DIRECT
 innodb_io_capacity = ${INNODB_IO_CAPACITY}
 innodb_io_capacity_max = ${INNODB_IO_CAPACITY_MAX}
 
-innodb_log_file_size = ${INNODB_LOG_FILE_SIZE}
 innodb_log_buffer_size = ${INNODB_LOG_BUFFER_SIZE}
 
 innodb_read_io_threads = ${INNODB_READ_IO_THREADS}
@@ -43,7 +40,6 @@ max_allowed_packet = ${MAX_ALLOWED_PACKET}
 
 bind-address = 0.0.0.0
 skip-name-resolve
-skip-host-cache
 
 read_only = ${READ_ONLY}
 super_read_only = ${SUPER_READ_ONLY}

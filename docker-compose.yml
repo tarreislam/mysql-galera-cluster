@@ -1,17 +1,17 @@
 version: "3.9"
 
 services:
-  mysql-primary:
+  primary:
     build: .
-    container_name: mysql-primary
+    container_name: primary
     volumes:
       - primary_data:/var/lib/mysql
     ports:
       - "4306:3306"
 
-  mysql-replica:
+  replica:
     build: .
-    container_name: mysql-replica
+    container_name: replica
     volumes:
       - replica_data:/var/lib/mysql
     ports:

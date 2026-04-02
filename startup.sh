@@ -2,7 +2,7 @@
 set -e
 
 # Load environment from .env
-export $(grep -v '^#' /env/.env | xargs)
+export $(grep -v '^#' .env | xargs)
 
 # Set read-only flags dynamically
 if [ "$MYSQL_ROLE" = "replica" ]; then
