@@ -1,0 +1,49 @@
+[mysqld]
+server-id = ${MYSQL_SERVER_ID}
+log_bin = mysql-bin
+binlog_format = ROW
+gtid_mode = ON
+enforce_gtid_consistency = ON
+log_slave_updates = ON
+relay_log_recovery = ON
+
+max_connections = ${MAX_CONNECTIONS}
+back_log = ${BACK_LOG}
+thread_cache_size = ${THREAD_CACHE_SIZE}
+
+innodb_buffer_pool_size = ${INNODB_BUFFER_POOL_SIZE}
+innodb_buffer_pool_instances = ${INNODB_BUFFER_POOL_INSTANCES}
+
+sort_buffer_size = ${SORT_BUFFER_SIZE}
+join_buffer_size = ${JOIN_BUFFER_SIZE}
+read_buffer_size = ${READ_BUFFER_SIZE}
+read_rnd_buffer_size = ${READ_RND_BUFFER_SIZE}
+
+tmp_table_size = ${TMP_TABLE_SIZE}
+max_heap_table_size = ${MAX_HEAP_TABLE_SIZE}
+
+innodb_flush_log_at_trx_commit = 1
+sync_binlog = 1
+innodb_flush_method = O_DIRECT
+
+innodb_io_capacity = ${INNODB_IO_CAPACITY}
+innodb_io_capacity_max = ${INNODB_IO_CAPACITY_MAX}
+
+innodb_log_file_size = ${INNODB_LOG_FILE_SIZE}
+innodb_log_buffer_size = ${INNODB_LOG_BUFFER_SIZE}
+
+innodb_read_io_threads = ${INNODB_READ_IO_THREADS}
+innodb_write_io_threads = ${INNODB_WRITE_IO_THREADS}
+innodb_thread_concurrency = 0
+
+table_open_cache = ${TABLE_OPEN_CACHE}
+table_definition_cache = ${TABLE_DEFINITION_CACHE}
+
+max_allowed_packet = ${MAX_ALLOWED_PACKET}
+
+bind-address = 0.0.0.0
+skip-name-resolve
+skip-host-cache
+
+read_only = ${READ_ONLY}
+super_read_only = ${SUPER_READ_ONLY}
