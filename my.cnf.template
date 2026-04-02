@@ -45,4 +45,4 @@ wsrep_cluster_address = "gcomm://${WSREP_CLUSTER_ADDRESS}"
 wsrep_sst_method = ${WSREP_SST_METHOD}
 wsrep_sst_auth = ${WSREP_SST_AUTH_USER}:${WSREP_SST_AUTH_PASS}
 wsrep_sst_donor = "${WSREP_SST_DONOR}"
-wsrep_provider_options = "gmcast.segment=0; gcache.size=512M;ist.recv_addr=${WSREP_NODE_ADDRESS}:4568"
+wsrep_provider_options = "gmcast.segment=0; gcache.size=512M; ist.recv_addr=${WSREP_NODE_ADDRESS}:4568; ist.recv_bind=0.0.0.0:4568"
