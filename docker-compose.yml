@@ -3,6 +3,8 @@ services:
   mariadb:
     build: .
     container_name: mariadb
+    environment:
+      MYSQL_ROLE: nothing
     ports:
       - "3306:3306"
       - "4444:4444"
