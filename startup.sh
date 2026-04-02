@@ -24,5 +24,7 @@ if [ "$MYSQL_ROLE" = "wsrep-new-cluster" ]; then
   docker-entrypoint.sh mariadbd --wsrep-new-cluster
 else
   echo "Running as joiner"
+  rm -f /var/lib/mysql/sst_in_progress
+  rm -f /var/lib/mysql/galera.cache
   docker-entrypoint.sh mariadbd
 fi
