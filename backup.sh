@@ -13,7 +13,7 @@ for db in $(mariadb -uroot -p"$MYSQL_ROOT_PASSWORD" -e "SHOW DATABASES;" | grep 
     FILE="${db}_${TIMESTAMP}.sql"
     TARFILE="${db}_${TIMESTAMP}.tar.gz"
 
-    mariadb-dump -uroot -p"$MYSQL_ROOT_PASSWORD" "$db" > "$BACKUP_DIR/$FILE"
+    mariadb-dump --single-transaction --quick -uroot -p"$MYSQL_ROOT_PASSWORD" "$db" > "$BACKUP_DIR/$FILE"
     tar -czf "$BACKUP_DIR/$TARFILE" -C "$BACKUP_DIR" "$FILE"
     rm "$BACKUP_DIR/$FILE"
 done
