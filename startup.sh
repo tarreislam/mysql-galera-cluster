@@ -2,12 +2,20 @@
 set -e
 # Load environment from .env
 export $(grep -v '^#' .env | xargs)
+
 # Generate config
 touch /etc/mysql/conf.d/10.cnf
 touch /etc/mysql/conf.d/11.cnf
 
 envsubst < /etc/mysql/my.cnf.template > /etc/mysql/conf.d/10.cnf
 envsubst < /etc/mysql/galera.cnf.template > /etc/mysql/conf.d/11.cnf
+
+# Set up backup cron job
+if [ "${BACKUP_ENABLED:-true}" = "true" ]; then
+  BACKUP_CRON_SCHEDULE_HOUR="${BACKUP_CRON_SCHEDULE_HOUR:-23}"
+  echo "0 $BACKUP_CRON_SCHEDULE_HOUR * * * /backup.sh >> /var/log/backup.log 2>&1" | crontab -
+  cron
+fi
 
 #Debug?
 if [ "$MYSQL_ROLE" = "debug" ]; then
