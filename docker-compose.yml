@@ -1,6 +1,7 @@
 
 services:
   mariadb:
+    restart: on-failure
     build: .
     container_name: mariadb
     env_file:
