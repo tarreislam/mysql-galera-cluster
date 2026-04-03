@@ -1,54 +1,32 @@
 [mysqld]
+bind-address = 0.0.0.0
+skip-name-resolve
+wait_timeout = 300
+interactive_timeout = 300
 binlog_format = ROW
-max_connections = ${MAX_CONNECTIONS}
-back_log = ${BACK_LOG}
-thread_cache_size = ${THREAD_CACHE_SIZE}
-
+innodb_flush_log_at_trx_commit = 1
+innodb_flush_method = O_DIRECT
 innodb_stats_on_metadata = 0
 innodb_lock_wait_timeout = 10
 innodb_old_blocks_time = 1000
 innodb_doublewrite  = 0
 innodb_buffer_pool_size = ${INNODB_BUFFER_POOL_SIZE}
-innodb_buffer_pool_instances = ${INNODB_BUFFER_POOL_INSTANCES}
+innodb_io_capacity = ${INNODB_IO_CAPACITY}
+innodb_io_capacity_max = ${INNODB_IO_CAPACITY_MAX}
+innodb_log_buffer_size = ${INNODB_LOG_BUFFER_SIZE}
+
+max_connections = ${MAX_CONNECTIONS}
+back_log = ${BACK_LOG}
+thread_cache_size = ${THREAD_CACHE_SIZE}
 
 sort_buffer_size = ${SORT_BUFFER_SIZE}
 join_buffer_size = ${JOIN_BUFFER_SIZE}
 read_buffer_size = ${READ_BUFFER_SIZE}
 read_rnd_buffer_size = ${READ_RND_BUFFER_SIZE}
 
-tmp_table_size = ${TMP_TABLE_SIZE}
+tmp_memory_table_size = ${TMP_MEMORY_TABLE_SIZE}
 max_heap_table_size = ${MAX_HEAP_TABLE_SIZE}
-
-innodb_flush_log_at_trx_commit = 1
-innodb_flush_method = O_DIRECT
-
-innodb_io_capacity = ${INNODB_IO_CAPACITY}
-innodb_io_capacity_max = ${INNODB_IO_CAPACITY_MAX}
-
-innodb_log_buffer_size = ${INNODB_LOG_BUFFER_SIZE}
 
 table_open_cache = ${TABLE_OPEN_CACHE}
 table_definition_cache = ${TABLE_DEFINITION_CACHE}
-
 max_allowed_packet = ${MAX_ALLOWED_PACKET}
-
-bind-address = 0.0.0.0
-skip-name-resolve
-wait_timeout = 300
-interactive_timeout = 300
-
-wsrep_on = ON
-wsrep_provider = /usr/lib/galera/libgalera_smm.so
-
-wsrep_cluster_name = "${WSREP_CLUSTER_NAME}"
-wsrep_node_name = "${WSREP_NODE_NAME}"
-
-wsrep_node_address = "${WSREP_NODE_ADDRESS}"
-wsrep_node_incoming_address = "${WSREP_NODE_ADDRESS}"
-
-wsrep_cluster_address = "gcomm://${WSREP_CLUSTER_ADDRESS}"
-
-wsrep_sst_method = ${WSREP_SST_METHOD}
-wsrep_sst_auth = ${WSREP_SST_AUTH_USER}:${WSREP_SST_AUTH_PASS}
-wsrep_sst_donor = "${WSREP_SST_DONOR}"
-wsrep_provider_options = "gmcast.segment=0; gcache.size=512M; ist.recv_addr=${WSREP_NODE_ADDRESS}:4568; ist.recv_bind=0.0.0.0:4568"

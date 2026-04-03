@@ -1,0 +1,21 @@
+[mysqld]
+
+wsrep_on = ON
+wsrep_provider = /usr/lib/galera/libgalera_smm.so
+
+wsrep_cluster_name = "${WSREP_CLUSTER_NAME}"
+wsrep_node_name = "${WSREP_NODE_NAME}"
+
+wsrep_node_address = "${WSREP_NODE_ADDRESS}"
+wsrep_node_incoming_address = "${WSREP_NODE_ADDRESS}"
+
+wsrep_cluster_address = "gcomm://${WSREP_CLUSTER_ADDRESS}"
+
+wsrep_sst_method = ${WSREP_SST_METHOD}
+wsrep_sst_auth = ${WSREP_SST_AUTH_USER}:${WSREP_SST_AUTH_PASS}
+wsrep_sst_donor = "${WSREP_SST_DONOR}"
+wsrep_provider_options = "gmcast.segment=0; gcache.size=512M; ist.recv_addr=${WSREP_NODE_ADDRESS}:4568; ist.recv_bind=0.0.0.0:4568; ${WSREP_PROVIDER_OPTIONS}"
+
+wsrep_slave_threads=${WSREP_SLAVE_THREADS}
+wsrep_max_ws_size=${WSREP_MAX_WS_SIZE}
+wsrep_retry_autocommit=${WSREP_RETRY_AUTOCOMMIT}

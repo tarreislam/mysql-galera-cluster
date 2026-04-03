@@ -4,7 +4,10 @@ set -e
 export $(grep -v '^#' .env | xargs)
 # Generate config
 touch /etc/mysql/conf.d/10.cnf
+touch /etc/mysql/conf.d/11.cnf
+
 envsubst < /etc/mysql/my.cnf.template > /etc/mysql/conf.d/10.cnf
+envsubst < /etc/mysql/galera.cnf.template > /etc/mysql/conf.d/11.cnf
 
 #Debug?
 if [ "$MYSQL_ROLE" = "debug" ]; then

@@ -8,6 +8,7 @@ FROM mariadb:12
 COPY --from=builder /usr/bin/envsubst /usr/bin/envsubst
 
 COPY my.cnf.template /etc/mysql/my.cnf.template
+COPY galera.cnf.template /etc/mysql/galera.cnf.template
 COPY startup.sh /startup.sh
 RUN chmod +x /startup.sh
 

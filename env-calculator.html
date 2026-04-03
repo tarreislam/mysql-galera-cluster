@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MySQL env config generator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Courier New', Courier, monospace;
+    background: #fff;
+    color: #000;
+    padding: 40px 24px 80px;
+  }
+
+  .wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 32px;
+  }
+
+  /* Form */
+  .form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 32px;
+  }
+
+  @media (max-width: 600px) {
+    .form { grid-template-columns: 1fr 1fr 1fr; }
+    .btn-generate { grid-column: 1 / -1; }
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555;
+  }
+
+  input[type="number"] {
+    font-family: inherit;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 0;
+    padding: 8px 10px;
+    width: 100%;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+  input[type="number"]:focus {
+    outline: 2px solid #000;
+    outline-offset: 0;
+    border-color: #000;
+  }
+
+  /* Disk selector */
+  .disk-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: 1px solid #ccc;
+  }
+
+  .disk-btn {
+    background: #fff;
+    border: none;
+    border-right: 1px solid #ccc;
+    color: #555;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 4px;
+    text-align: center;
+  }
+
+  .disk-btn:last-child { border-right: none; }
+
+  .disk-btn:hover { background: #f5f5f5; color: #000; }
+
+  .disk-btn.active {
+    background: #000;
+    color: #fff;
+  }
+
+  /* Button */
+  .btn-generate {
+    background: #000;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 9px 20px;
+    white-space: nowrap;
+  }
+
+  .btn-generate:hover { background: #333; }
+
+  /* Output */
+  .output { display: none; }
+  .output.visible { display: block; }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .output-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555;
+  }
+
+  .copy-btn {
+    background: #fff;
+    border: 1px solid #ccc;
+    color: #333;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 4px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .copy-btn:hover { border-color: #000; color: #000; }
+  .copy-btn.copied { background: #000; color: #fff; border-color: #000; }
+
+  pre {
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.8;
+    border: 1px solid #ddd;
+    padding: 20px;
+    white-space: pre;
+    overflow-x: auto;
+    margin-bottom: 32px;
+  }
+
+  /* Syntax */
+  .c-comment { color: #999; }
+  .c-key     { color: #000; }
+  .c-eq      { color: #000; }
+  .c-val     { color: #000; font-weight: bold; }
+  .c-val-fixed { color: #000; font-weight: bold; }
+
+  /* Explain table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #555;
+    border-bottom: 1px solid #ddd;
+    padding: 6px 8px;
+  }
+
+  td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+
+  td:first-child { color: #000; font-weight: bold; white-space: nowrap; }
+  td:last-child  { color: #444; }
+
+  tr:last-child td { border-bottom: none; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1>MariaDB env config generator</h1>
+  <p class="subtitle">MariaDB 12.2 + Galera 4. Fill in your hardware specs and copy the generated env config.</p>
+
+  <div class="form">
+    <div class="field">
+      <label>RAM (GB)</label>
+      <input type="number" id="ram" min="1" max="4096" placeholder="e.g. 32" />
+    </div>
+
+    <div class="field">
+      <label>CPU Cores</label>
+      <input type="number" id="cores" min="1" max="512" placeholder="e.g. 8" />
+    </div>
+
+    <div class="field">
+      <label>Disk Type</label>
+      <div class="disk-grid">
+        <button class="disk-btn" data-disk="HDD" onclick="selectDisk(this)">HDD</button>
+        <button class="disk-btn" data-disk="SSD" onclick="selectDisk(this)">SSD</button>
+        <button class="disk-btn active" data-disk="NVME" onclick="selectDisk(this)">NVMe</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Network speed (Gbit)</label>
+      <input type="number" id="netspeed" min="0.1" max="100" step="0.1" placeholder="e.g. 10" />
+    </div>
+
+    <div class="field">
+      <label>Max latency (ms)</label>
+      <input type="number" id="latency" min="1" max="9999" placeholder="e.g. 2000" />
+    </div>
+
+    <button class="btn-generate" onclick="generate()">Generate</button>
+  </div>
+
+  <div class="output" id="output-panel">
+    <div class="output-header">
+      <span class="output-label">Generated config</span>
+      <button class="copy-btn" id="copy-btn" onclick="copyConfig()">Copy</button>
+    </div>
+
+    <pre id="config-pre"></pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Explanation</th>
+        </tr>
+      </thead>
+      <tbody id="explain-tbody"></tbody>
+    </table>
+  </div>
+
+</div>
+<script>
+let selectedDisk = 'NVME';
+let rawConfig = '';
+
+function selectDisk(btn) {
+  document.querySelectorAll('.disk-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedDisk = btn.dataset.disk;
+}
+
+function formatMB(mb) {
+  return Math.round(mb) + 'M';
+}
+
+function calcConfig(ramGB, cores, disk, netspeedGbit, latencyMs) {
+  const ramMB=ramGB * 1024;
+
+  // Buffer pool: 70% of RAM (min 128M)
+  const bufferPoolMB=Math.max(128, Math.round(ramMB * 0.70 / 64) * 64);
+  // Instances: 1 per GB of pool, max 64
+  const bufferPoolInstances = Math.min(64, Math.max(1, Math.round(bufferPoolMB / 1024)));
+
+  // Per-thread buffers — keep small
+  const sortBufferMB    = Math.min(8, Math.max(1, Math.round(ramGB * 0.002)));
+  const joinBufferMB    = Math.min(8, Math.max(1, Math.round(ramGB * 0.002)));
+  const readBufferMB    = Math.min(4, Math.max(1, Math.round(ramGB * 0.001)));
+  const readRndBufferMB=Math.min(8, Math.max(2, Math.round(ramGB * 0.002)));
+
+  // Temp tables: ~1.5% of RAM
+  const tmpTableMB=Math.min(512, Math.max(64, Math.round(ramMB * 0.015 / 16) * 16));
+
+  // IO capacity by disk
+  const ioMap = { HDD: 200, SSD: 2000, NVME: 8000 };
+  const ioCapacity    = ioMap[disk];
+  const ioCapacityMax = ioCapacity * 2;
+
+  // Log buffer: 64M–512M depending on RAM
+  const logBufferMB=Math.min(512, Math.max(64, Math.round(ramMB * 0.008 / 64) * 64));
+
+  // Table caches
+  const tableOpenCache     = Math.min(8192, Math.max(400, cores * 64));
+  const tableDefCache      = Math.min(4096, Math.max(400, cores * 32));
+
+  // max_connections: scaled by RAM × cores, bounded 100–1000
+  const maxConnections = Math.min(1000, Math.max(100, Math.round(ramGB * cores * 1.5 / 10) * 10));
+
+
+  // Galera / wsrep settings derived from network + latency
+  // WSREP_SLAVE_THREADS: 2x cores is a good starting point for Galera
+  const wsrepSlaveThreads = Math.min(64, cores * 2);
+
+  // WSREP_MAX_WS_SIZE: scale with network speed, cap at 2G
+  // faster network = can afford larger writesets
+  const wsrepMaxWsSizeMB = Math.min(2048, Math.max(64, Math.round(netspeedGbit * 64 / 16) * 16));
+
+  // GCS flow control: how many writesets can queue before flow control kicks in
+  // higher latency = allow more queuing to avoid stalling the cluster
+  const gcsFcLimit = Math.min(256, Math.max(16, Math.round(latencyMs / 8)));
+
+  // EVS timeouts: all derived from latency
+  // keepalive: ~2× latency, min 1s
+  const evsKeepaliveMs  = Math.max(1000, latencyMs * 2);
+  // suspect: ~10× latency, min 5s
+  const evsSuspectMs    = Math.max(5000, latencyMs * 10);
+  // inactive: ~20× latency, min 15s
+  const evsInactiveMs   = Math.max(15000, latencyMs * 20);
+
+  return {
+    bufferPoolMB,
+    sortBufferMB,
+    joinBufferMB,
+    readBufferMB,
+    readRndBufferMB,
+    tmpTableMB,
+    ioCapacity,
+    ioCapacityMax,
+    logBufferMB,
+    tableOpenCache,
+    tableDefCache,
+    maxConnections,
+    wsrepSlaveThreads,
+    wsrepMaxWsSizeMB,
+    gcsFcLimit,
+    evsKeepaliveMs,
+    evsSuspectMs,
+    evsInactiveMs,
+  };
+}
+
+function buildConfigText(v, ram, cores, disk, netspeed, latency) {
+  const now = new Date().toISOString().slice(0, 10);
+  return `# Generated by MariaDB env config generator
+# Date:         ${now}
+# MariaDB:      12.2 + Galera 4
+# RAM:          ${ram}GB
+# CPU cores:    ${cores}
+# Disk:         ${disk}
+# Network:      ${netspeed} Gbit
+# Max latency:  ${latency}ms
+
+# ── connections ──────────────────────────────────────────
+MAX_CONNECTIONS=${v.maxConnections}
+BACK_LOG=256
+THREAD_CACHE_SIZE=64
+
+# ── memory ───────────────────────────────────────────────
+INNODB_BUFFER_POOL_SIZE=${formatMB(v.bufferPoolMB)}
+SORT_BUFFER_SIZE=${formatMB(v.sortBufferMB)}
+JOIN_BUFFER_SIZE=${formatMB(v.joinBufferMB)}
+READ_BUFFER_SIZE=${formatMB(v.readBufferMB)}
+READ_RND_BUFFER_SIZE=${formatMB(v.readRndBufferMB)}
+TMP_MEMORY_TABLE_SIZE=${formatMB(v.tmpTableMB)}
+MAX_HEAP_TABLE_SIZE=${formatMB(v.tmpTableMB)}
+
+# ── IO ───────────────────────────────────────────────────
+INNODB_IO_CAPACITY=${v.ioCapacity}
+INNODB_IO_CAPACITY_MAX=${v.ioCapacityMax}
+INNODB_LOG_BUFFER_SIZE=${formatMB(v.logBufferMB)}
+
+# ── misc ─────────────────────────────────────────────────
+TABLE_OPEN_CACHE=${v.tableOpenCache}
+TABLE_DEFINITION_CACHE=${v.tableDefCache}
+MAX_ALLOWED_PACKET=64M
+
+# ── galera / wsrep (MariaDB 12.2 + Galera 4) ────────────
+WSREP_SLAVE_THREADS=${v.wsrepSlaveThreads}
+WSREP_MAX_WS_SIZE=${formatMB(v.wsrepMaxWsSizeMB)}
+WSREP_PROVIDER_OPTIONS=evs.keepalive_period=PT${(v.evsKeepaliveMs/1000).toFixed(1)}S;evs.suspect_timeout=PT${(v.evsSuspectMs/1000).toFixed(1)}S;evs.inactive_timeout=PT${(v.evsInactiveMs/1000).toFixed(1)}S;gcs.fc_limit=${v.gcsFcLimit}`;
+}
+
+function highlight(text) {
+  return text
+    .replace(/^(\[.*\])$/gm,        '<span class="c-section">$1</span>')
+    .replace(/^(# .*)/gm,           '<span class="c-comment">$1</span>')
+    .replace(/^([A-Z_]+)(=)(.+)$/gm, (_, k, eq, v) => {
+      const isFixed = ['BACK_LOG','THREAD_CACHE_SIZE','MAX_ALLOWED_PACKET'].includes(k.trim());
+      const valClass = isFixed ? 'c-val-fixed' : 'c-val';
+      return `<span class="c-key">${k}</span><span class="c-eq">${eq}</span><span class="${valClass}">${v}</span>`;
+    });
+}
+
+function generate() {
+  const ram      = parseInt(document.getElementById('ram').value);
+  const cores    = parseInt(document.getElementById('cores').value);
+  const netspeed = parseFloat(document.getElementById('netspeed').value);
+  const latency  = parseInt(document.getElementById('latency').value);
+
+  if (!ram || ram < 1)         { shake('ram');      return; }
+  if (!cores || cores < 1)     { shake('cores');    return; }
+  if (!netspeed || netspeed < 0.1) { shake('netspeed'); return; }
+  if (!latency || latency < 1) { shake('latency');  return; }
+
+  const v = calcConfig(ram, cores, selectedDisk, netspeed, latency);
+  rawConfig = buildConfigText(v, ram, cores, selectedDisk, netspeed, latency);
+
+  // Render highlighted
+  document.getElementById('config-pre').innerHTML=highlight(rawConfig);
+
+  // Summary chips
+  // summary chips removed
+
+  // Explain cards
+  const explains = [
+    { key: 'MAX_CONNECTIONS',              val: `${v.maxConnections} — RAM(${ram}GB) × cores(${cores}) × 1.5` },
+    { key: 'INNODB_BUFFER_POOL_SIZE',      val: `${formatMB(v.bufferPoolMB)} — ${Math.round(v.bufferPoolMB/ram/10.24)}% of RAM` },
+    { key: 'INNODB_IO_CAPACITY',           val: `${v.ioCapacity} IOPS for ${selectedDisk} disk` },
+    { key: 'INNODB_IO_CAPACITY_MAX',       val: `${v.ioCapacityMax} burst ceiling` },
+    { key: 'SORT_BUFFER_SIZE',             val: `${formatMB(v.sortBufferMB)} per thread` },
+    { key: 'TMP_MEMORY_TABLE_SIZE',               val: `${formatMB(v.tmpTableMB)} in-memory temp cap` },
+    { key: 'TABLE_OPEN_CACHE',             val: `${v.tableOpenCache} open file descriptors` },
+    { key: 'INNODB_LOG_BUFFER_SIZE',       val: `${formatMB(v.logBufferMB)} write buffer` },
+    { key: 'WSREP_SLAVE_THREADS',          val: `${v.wsrepSlaveThreads} — cores(${cores}) × 2` },
+    { key: 'WSREP_MAX_WS_SIZE',            val: `${formatMB(v.wsrepMaxWsSizeMB)} — scaled from ${netspeed} Gbit network` },
+    { key: 'GCS.FC_LIMIT',                 val: `${v.gcsFcLimit} — latency(${latency}ms) ÷ 8, allows queuing before flow control` },
+    { key: 'EVS.KEEPALIVE_PERIOD',         val: `${(v.evsKeepaliveMs/1000).toFixed(1)}s — 2× latency` },
+    { key: 'EVS.SUSPECT_TIMEOUT',          val: `${(v.evsSuspectMs/1000).toFixed(1)}s — 10× latency` },
+    { key: 'EVS.INACTIVE_TIMEOUT',         val: `${(v.evsInactiveMs/1000).toFixed(1)}s — 20× latency` },
+  ];
+
+  document.getElementById('explain-tbody').innerHTML=explains.map(e => `<tr><td>${e.key}</td><td>${e.val}</td></tr>`).join('');
+
+  // Show panel
+  const panel = document.getElementById('output-panel');
+  panel.classList.add('visible');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Reset copy button
+  const cb = document.getElementById('copy-btn');
+  cb.textContent = 'Copy';
+  cb.classList.remove('copied');
+}
+
+function copyConfig() {
+  if (!rawConfig) return;
+  navigator.clipboard.writeText(rawConfig).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function shake(id) {
+  const el = document.getElementById(id);
+  el.style.borderColor = '#f00';
+  el.style.outline = '2px solid #f00';
+  el.animate([
+    { transform: 'translateX(0)' },
+    { transform: 'translateX(-6px)' },
+    { transform: 'translateX(6px)' },
+    { transform: 'translateX(-4px)' },
+    { transform: 'translateX(0)' },
+  ], { duration: 300, easing: 'ease-out' });
+  el.focus();
+  setTimeout(() => { el.style.borderColor = ''; el.style.outline = ''; }, 1500);
+}
+
+// Allow Enter key to trigger generate
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
