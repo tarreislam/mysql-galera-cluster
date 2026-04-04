@@ -18,7 +18,7 @@ if [ "${BACKUP_ENABLED:-true}" = "true" ]; then
 fi
 
 #Debug?
-if [ "$MYSQL_ROLE" = "debug" ]; then
+if [ "$ROLE" = "debug" ]; then
   echo "Debug"
     while true
     do
@@ -27,15 +27,17 @@ if [ "$MYSQL_ROLE" = "debug" ]; then
 fi
 
 # Run mariadb
-if [ "$MYSQL_ROLE" = "wsrep-new-cluster" ]; then
-  echo "Starting new cluster (force safe to start)"
-  if [ -f /var/lib/mysql/grastate.dat ]; then
-    sed -i 's/^\(safe_to_bootstrap:\s*\).*/\11/' /var/lib/mysql/grastate.dat
+if [ "$ROLE" = "wsrep-new-cluster" ]; then
+  echo "Starting new cluster"
+  if [ "$FORCE" = "true" ]; then
+    if [ -f /var/lib/mysql/grastate.dat ]; then
+      sed -i 's/^\(safe_to_bootstrap:\s*\).*/\11/' /var/lib/mysql/grastate.dat
+    fi
   fi
   docker-entrypoint.sh mariadbd --wsrep-new-cluster
 else
   echo "Running as joiner"
-    if [ "$MYSQL_FORCE_SST" = "true" ]; then
+    if [ "$FORCE" = "true" ]; then
       echo "Force SST by removing sst_in_progress and galera.cache"
       rm -f /var/lib/mysql/sst_in_progress
       rm -f /var/lib/mysql/galera.cache
