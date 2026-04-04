@@ -5,6 +5,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 FROM mariadb:12
+ENV TZ=Europe/Stockholm
 COPY --from=builder /usr/bin/envsubst /usr/bin/envsubst
 
 RUN apt-get update && \
