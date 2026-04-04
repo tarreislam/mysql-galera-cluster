@@ -14,15 +14,18 @@ Copy the example env file:
 cp .env.example .env
 ```
 
-Open `env-calculator.html` in your browser and fill in your hardware specs (RAM, CPU cores, disk type, network speed, max latency). It will generate recommended values for the performance-related variables. Copy the output into your `.env` file.
-
-Then fill in the remaining cluster-specific variables manually (node addresses, cluster name, SST credentials, etc.).
+Open `env-calculator.html` in your browser and fill in your hardware specs (RAM, CPU cores, disk type, network speed, max latency). It will generate recommended values for the performance-related variables. Copy the output into your `.env` file, then fill in the remaining cluster-specific variables manually.
 
 ### 2. Start the cluster
 
 **First node — bootstrap a new cluster:**
 
-Set `MYSQL_ROLE=wsrep-new-cluster` in `.env`, then:
+```bash
+# .env
+ROLE=wsrep-new-cluster
+TZ=Your/Timezone (defaults to Europe/Stockholm)
+MYSQL_ROOT_PASSWORD=root
+```
 
 ```bash
 docker-compose up -d mariadb
@@ -30,7 +33,11 @@ docker-compose up -d mariadb
 
 **Subsequent nodes — join an existing cluster:**
 
-Leave `MYSQL_ROLE` empty or unset in `.env`, then:
+```bash# .env
+ROLE=joiner
+TZ=Your/Timezone (defaults to Europe/Stockholm)
+MYSQL_ROOT_PASSWORD=root
+```
 
 ```bash
 docker-compose up -d mariadb
@@ -42,10 +49,23 @@ docker-compose up -d mariadb
 
 ### Core
 
-| Variable | Description | Example |
-|---|---|---|
-| `MYSQL_ROLE` | Set to `wsrep-new-cluster` to bootstrap, leave empty to join | `wsrep-new-cluster` |
-| `MYSQL_ROOT_PASSWORD` | Root password for MariaDB | `root` |
+| Variable              | Description                                                                                                          | Example             |
+|-----------------------|----------------------------------------------------------------------------------------------------------------------|---------------------|
+| `ROLE`                | Node startup mode. Set to `wsrep-new-cluster` to bootstrap, leave empty to join, or `debug` to start without MariaDB | `wsrep-new-cluster` |
+| `FORCE`               | Enables recovery overrides on startup (see below)                                                                    | `true`              |
+| `TZ`                  | Set timezone for TZdata                                                                                              | `Europe/Stockholm`  |
+| `MYSQL_ROOT_PASSWORD` | Root password for MariaDB                                                                                            | `root`              |
+
+### FORCE behavior
+
+`FORCE=true` changes startup behavior depending on the `ROLE`:
+
+| `ROLE` | Effect of `FORCE=true` |
+|---|---|
+| `wsrep-new-cluster` | Patches `grastate.dat` to set `safe_to_bootstrap: 1`, allowing a forced cluster bootstrap after a crash |
+| *(joiner / empty)* | Removes `sst_in_progress` and `galera.cache` to force a clean SST on join |
+
+> **Use with caution.** Only set `FORCE=true` when recovering a node. Remove it once the cluster is healthy.
 
 ### Galera / WSREP
 
@@ -81,7 +101,7 @@ docker-compose up -d mariadb
 
 | Variable | Default | Description |
 |---|---|---|
-| `BACKUP_ENABLED` | `false` | Set to `true` to enable scheduled backups |
+| `BACKUP_ENABLED` | `true` | Set to `false` to disable scheduled backups |
 | `BACKUP_HOUR` | `23` | Hour of day (0–23) to run the backup |
 | `BACKUP_RETENTION_DAYS` | `14` | Days to keep backup files before deletion |
 
@@ -97,19 +117,43 @@ docker exec -it mariadb crontab -l
 
 ## Crash Recovery
 
-If a node crashes and fails to rejoin, and this node was the last primary, Galera may mark it as unsafe to bootstrap. The startup script handles this automatically: when `MYSQL_ROLE=wsrep-new-cluster`, it patches `grastate.dat` to force `safe_to_bootstrap: 1` before starting.
+If the cluster goes down uncleanly and won't restart, use `FORCE=true` to recover.
 
-For a joiner node, `sst_in_progress` and `galera.cache` are cleared on startup to ensure a clean SST.
+**Primary node (last to go down):**
+
+```bash
+# .env
+ROLE=wsrep-new-cluster
+FORCE=true
+```
+
+This patches `grastate.dat` to force `safe_to_bootstrap: 1` so the node can bootstrap.
+
+**Joiner nodes:**
+
+```bash
+# .env
+ROLE=
+FORCE=true
+```
+
+This clears `sst_in_progress` and `galera.cache` so the node requests a fresh SST.
+
+Once the cluster is healthy, remove `FORCE=true` from all nodes.
 
 ---
 
 ## Debug Mode
 
-Set `MYSQL_ROLE=debug` to start the container without launching MariaDB. The container will stay alive indefinitely, allowing you to inspect configs or run commands manually:
+Set `ROLE=debug` to start the container without launching MariaDB. The container stays alive indefinitely, useful for inspecting generated configs or running commands manually:
 
 ```bash
-docker exec -it mariadb bash
+# .env
+ROLE=debug
 ```
+Execute into container with
+
+`docker exec -it mariadb bash` or `docker-compose exec mariadb bash` 
 
 ---
 
@@ -124,7 +168,7 @@ docker exec -it mariadb bash
 
 ## Networking
 
-The container runs with `network_mode: host`, meaning it binds directly to the host network. This is required for Galera's inter-node communication to work correctly without extra port mapping.
+The container runs with `network_mode: host`, binding directly to the host network. This is required for Galera's inter-node communication to work without additional port mapping.
 
 ---
 
@@ -134,9 +178,9 @@ The container runs with `network_mode: host`, meaning it binds directly to the h
 |---|---|
 | `Dockerfile` | Builds the image on top of `mariadb:12` |
 | `startup.sh` | Entrypoint — loads env, renders configs, starts cron and MariaDB |
-| `backup.sh` | Backup script run by cron |
+| `backup.sh` | Backup script executed by cron |
 | `my.cnf.template` | MariaDB config template (rendered via `envsubst`) |
 | `galera.cnf.template` | Galera/WSREP config template (rendered via `envsubst`) |
-| `docker-compose.yml` | Compose file for running the node |
+| `docker-compose.yml` | Compose file for running a node |
 | `env-calculator.html` | Browser tool for generating performance tuning values |
 | `.env.example` | Example environment file |
