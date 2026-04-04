@@ -99,7 +99,7 @@ docker exec -it mariadb crontab -l
 
 If a node crashes and fails to rejoin, and this node was the last primary, Galera may mark it as unsafe to bootstrap. The startup script handles this automatically: when `MYSQL_ROLE=wsrep-new-cluster`, it patches `grastate.dat` to force `safe_to_bootstrap: 1` before starting.
 
-For a joiner node, `sst_in_progress` and `galera.cache` are cleared on startup to ensure a clean SST. If env-variable `WSREP_FORCE_SST` is set to `true`
+For a joiner node, `sst_in_progress` and `galera.cache` are cleared on startup to ensure a clean SST.
 
 ---
 
