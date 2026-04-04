@@ -35,7 +35,10 @@ if [ "$MYSQL_ROLE" = "wsrep-new-cluster" ]; then
   docker-entrypoint.sh mariadbd --wsrep-new-cluster
 else
   echo "Running as joiner"
-  rm -f /var/lib/mysql/sst_in_progress
-  rm -f /var/lib/mysql/galera.cache
+    if [ "$MYSQL_FORCE_SST" = "true" ]; then
+      echo "Force SST by removing sst_in_progress and galera.cache"
+      rm -f /var/lib/mysql/sst_in_progress
+      rm -f /var/lib/mysql/galera.cache
+    fi
   docker-entrypoint.sh mariadbd
 fi
